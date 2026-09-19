@@ -36,9 +36,10 @@ class NewsHome extends StatefulWidget {
 
 class _NewsHomeState extends State<NewsHome> {
   // Remplace cette valeur par ta clé NewsAPI.
-  final NewsApiService api = NewsApiService(
-    'COLLE_TA_CLE_NEWSAPI_ICI',
-  );
+  
+  );final NewsApiService api = NewsApiService(
+  const String.fromEnvironment('NEWS_API_KEY'),
+);
 
   List<NewsArticle> articles = [];
   bool loading = false;
