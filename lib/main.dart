@@ -1,255 +1,339 @@
-import 'dart:async';
+writing{variant="standard" title="World AI News — main.dart" id="58321"}import 'package:flutter/material.dart';import 'models/news_article.dart';import 'services/news_api_service.dart';
 
+void main() {runApp(const WorldAIApp());}
+
+class WorldAIApp extends StatelessWidget {const WorldAIApp({super.key});
+
+@overrideWidget build(BuildContext context) {return MaterialApp(debugShowCheckedModeBanner: false,title: 'World AI News',theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue,),useMaterial3: true,),home: const NewsHome(),);}}
+
+class NewsHome extends StatefulWidget {const NewsHome({super.key});
+
+@overrideState<NewsHome> createState() => _NewsHomeState();}
+
+class _NewsHomeState extends State<NewsHome> {final NewsApiService api = NewsApiService(const String.fromEnvironment('NEWS_API_KEY'),);
+
+List<NewsArticle> articles = [];bool loading = false;String error = '';
+
+@overridevoid initState() {super.initState();loadNews();}
+
+Future<void> loadNews() async {setState(() {loading = true;error = '';});
+
+try {
+final result = await api.getWorldNews();
+
+setState(() {
+articles = result;
+loading = false;
+});
+} catch (e) {
+setState(() {
+loading = false;
+error = 'Impossible de charger les actualités.';
+});
+}
+
+}
+
+Future<void> searchNews(String query) async {if (query.trim().isEmpty) {await loadNews();return;}
+
+setState(() {
+loading = true;
+error = '';
+});
+
+try {
+final result = await api.search(query);
+
+setState(() {
+articles = result;
+loading = false;
+});
+} catch (e) {
+setState(() {
+loading = false;
+error = 'Recherche impossible.';
+});
+}
+
+}
+
+@overrideWidget build(BuildContext context) {return Scaffold(appBar: AppBar(title: const Text('World AI News'),actions: [IconButton(onPressed: loadNews,icon: const Icon(Icons.refresh),),],),body: Column(children: [Padding(padding: const EdgeInsets.all(12),child: TextField(onSubmitted: searchNews,decoration: InputDecoration(hintText: 'Rechercher une actualité...',prefixIcon: const Icon(Icons.search),border: OutlineInputBorder(borderRadius: BorderRadius.circular(12),),),),),
+
+if (loading)
+const Padding(
+padding: EdgeInsets.all(20),
+child: CircularProgressIndicator(),
+),
+
+if (error.isNotEmpty)  
+    Padding(  
+      padding: const EdgeInsets.all(16),  
+      child: Text(  
+        error,  
+        style: const TextStyle(  
+          color: Colors.red,  
+        ),  
+      ),  
+    ),  
+
+  Expanded(  
+    child: articles.isEmpty && !loading  
+        ? const Center(  
+            child: Text(  
+              'Aucune actualité disponible.',  
+            ),  
+          )  
+        : ListView.builder(  
+            itemCount: articles.length,  
+            itemBuilder: (context, index) {  
+              final article = articles[index];  
+
+              return Card(  
+                margin: const EdgeInsets.symmetric(  
+                  horizontal: 12,  
+                  vertical: 6,  
+                ),  
+                child: ListTile(  
+                  leading: article.imageUrl != null  
+                      ? Image.network(  
+                          article.imageUrl!,  
+                          width: 80,  
+                          height: 80,  
+                          fit: BoxFit.cover,  
+                          errorBuilder:  
+                              (context, error, stackTrace) {  
+                            return const Icon(  
+                              Icons.image_not_supported,  
+                            );  
+                          },  
+                        )  
+                      : const Icon(Icons.article),  
+
+                  title: Text(  
+                    article.title,  
+                    maxLines: 3,  
+                    overflow: TextOverflow.ellipsis,  
+                  ),  
+
+                  subtitle: Text(  
+                    article.date.toLocal().toString(),  
+                  ),  
+
+                  onTap: () {  
+                    // Le lien de l'article  
+                    // sera ouvert dans l'étape suivante.  
+                  },  
+                ),  
+              );  
+            },  
+          ),  
+  ),  
+],
+
+),
+);
+
+}}
+
+writing{variant="standard" title="World AI News — main.dart" id="58321"}
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
-
 import 'models/news_article.dart';
 import 'services/news_api_service.dart';
 
 void main() {
-  runApp(const WorldAIApp());
+runApp(const WorldAIApp());
 }
 
 class WorldAIApp extends StatelessWidget {
-  const WorldAIApp({super.key});
+const WorldAIApp({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'World AI News',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
-      home: const NewsHome(),
-    );
-  }
+@override
+Widget build(BuildContext context) {
+return MaterialApp(
+debugShowCheckedModeBanner: false,
+title: 'World AI News',
+theme: ThemeData(
+colorScheme: ColorScheme.fromSeed(
+seedColor: Colors.blue,
+),
+useMaterial3: true,
+),
+home: const NewsHome(),
+);
+}
 }
 
 class NewsHome extends StatefulWidget {
-  const NewsHome({super.key});
+const NewsHome({super.key});
 
-  @override
-  State<NewsHome> createState() => _NewsHomeState();
+@override
+State<NewsHome> createState() => _NewsHomeState();
 }
 
 class _NewsHomeState extends State<NewsHome> {
-  // Remplace cette valeur par ta clé NewsAPI.
-  
-  );final NewsApiService api = NewsApiService(
-  const String.fromEnvironment('NEWS_API_KEY'),
+final NewsApiService api = NewsApiService(
+const String.fromEnvironment('NEWS_API_KEY'),
 );
 
-  List<NewsArticle> articles = [];
-  bool loading = false;
-  String error = '';
-  Timer? timer;
+List<NewsArticle> articles = [];
+bool loading = false;
+String error = '';
 
-  @override
-  void initState() {
-    super.initState();
-    loadNews();
-
-    timer = Timer.periodic(
-      const Duration(minutes: 1),
-      (_) => loadNews(),
-    );
-  }
-
-  @override
-  void dispose() {
-    timer?.cancel();
-    super.dispose();
-  }
-
-  Future<void> loadNews() async {
-    setState(() {
-      loading = true;
-      error = '';
-    });
-
-    try {
-      final result = await api.getWorldNews();
-
-      if (!mounted) return;
-
-      setState(() {
-        articles = result;
-        loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        loading = false;
-        error = 'Impossible de charger les actualités.';
-      });
-    }
-  }
-
-  Future<void> searchNews(String query) async {
-    if (query.trim().isEmpty) {
-      await loadNews();
-      return;
-    }
-
-    setState(() {
-      loading = true;
-      error = '';
-    });
-
-    try {
-      final result = await api.search(query);
-
-      if (!mounted) return;
-
-      setState(() {
-        articles = result;
-        loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        loading = false;
-        error = 'Recherche impossible.';
-      });
-    }
-  }
-
-  String formatDate(DateTime date) {
-    final local = date.toLocal();
-
-    String two(int n) => n.toString().padLeft(2, '0');
-
-    return '${two(local.day)}/${two(local.month)}/${local.year} '
-        '${two(local.hour)}:${two(local.minute)}';
-  }
-
-  Future<void> openArticle(String url) async {
-    final uri = Uri.tryParse(url);
-
-    if (uri == null) return;
-
-    await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('🌍 World AI News'),
-        actions: [
-          IconButton(
-            onPressed: loadNews,
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: SearchBar(
-              hintText: 'Rechercher une actualité...',
-              leading: const Icon(Icons.search),
-              onSubmitted: searchNews,
-            ),
-          ),
-          if (loading) const LinearProgressIndicator(),
-          if (error.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(
-                error,
-                style: const TextStyle(color: Colors.red),
-              ),
-            ),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: loadNews,
-              child: articles.isEmpty
-                  ? ListView(
-                      children: const [
-                        SizedBox(height: 100),
-                        Center(
-                          child: Text(
-                            'Aucune actualité disponible.',
-                          ),
-                        ),
-                      ],
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(12),
-                      itemCount: articles.length,
-                      itemBuilder: (context, index) {
-                        final article = articles[index];
-
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          clipBehavior: Clip.antiAlias,
-                          child: InkWell(
-                            onTap: () => openArticle(article.url),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                children: [
-                                  if (article.imageUrl != null &&
-                                      article.imageUrl!.isNotEmpty)
-                                    ClipRRect(
-                                      borderRadius:
-                                          BorderRadius.circular(10),
-                                      child: Image.network(
-                                        article.imageUrl!,
-                                        width: double.infinity,
-                                        height: 180,
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (_, __, ___) =>
-                                                const SizedBox(),
-                                      ),
-                                    ),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    article.title,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  if (article.description != null)
-                                    Text(
-                                      article.description!,
-                                      maxLines: 4,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    '${article.source} • '
-                                    '${formatDate(article.publishedAt)}',
-                                    style: TextStyle(
-                                      color: Colors.grey.shade600,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+@override
+void initState() {
+super.initState();
+loadNews();
 }
+
+Future<void> loadNews() async {
+setState(() {
+loading = true;
+error = '';
+});
+
+try {  
+  final result = await api.getWorldNews();  
+
+  setState(() {  
+    articles = result;  
+    loading = false;  
+  });  
+} catch (e) {  
+  setState(() {  
+    loading = false;  
+    error = 'Impossible de charger les actualités.';  
+  });  
+}
+
+}
+
+Future<void> searchNews(String query) async {
+if (query.trim().isEmpty) {
+await loadNews();
+return;
+}
+
+setState(() {  
+  loading = true;  
+  error = '';  
+});  
+
+try {  
+  final result = await api.search(query);  
+
+  setState(() {  
+    articles = result;  
+    loading = false;  
+  });  
+} catch (e) {  
+  setState(() {  
+    loading = false;  
+    error = 'Recherche impossible.';  
+  });  
+}
+
+}
+
+@override
+Widget build(BuildContext context) {
+return Scaffold(
+appBar: AppBar(
+title: const Text('World AI News'),
+actions: [
+IconButton(
+onPressed: loadNews,
+icon: const Icon(Icons.refresh),
+),
+],
+),
+body: Column(
+children: [
+Padding(
+padding: const EdgeInsets.all(12),
+child: TextField(
+onSubmitted: searchNews,
+decoration: InputDecoration(
+hintText: 'Rechercher une actualité...',
+prefixIcon: const Icon(Icons.search),
+border: OutlineInputBorder(
+borderRadius: BorderRadius.circular(12),
+),
+),
+),
+),
+
+if (loading)  
+        const Padding(  
+          padding: EdgeInsets.all(20),  
+          child: CircularProgressIndicator(),  
+        ),  
+
+      if (error.isNotEmpty)  
+        Padding(  
+          padding: const EdgeInsets.all(16),  
+          child: Text(  
+            error,  
+            style: const TextStyle(  
+              color: Colors.red,  
+            ),  
+          ),  
+        ),  
+
+      Expanded(  
+        child: articles.isEmpty && !loading  
+            ? const Center(  
+                child: Text(  
+                  'Aucune actualité disponible.',  
+                ),  
+              )  
+            : ListView.builder(  
+                itemCount: articles.length,  
+                itemBuilder: (context, index) {  
+                  final article = articles[index];  
+
+                  return Card(  
+                    margin: const EdgeInsets.symmetric(  
+                      horizontal: 12,  
+                      vertical: 6,  
+                    ),  
+                    child: ListTile(  
+                      leading: article.imageUrl != null  
+                          ? Image.network(  
+                              article.imageUrl!,  
+                              width: 80,  
+                              height: 80,  
+                              fit: BoxFit.cover,  
+                              errorBuilder:  
+                                  (context, error, stackTrace) {  
+                                return const Icon(  
+                                  Icons.image_not_supported,  
+                                );  
+                              },  
+                            )  
+                          : const Icon(Icons.article),  
+
+                      title: Text(  
+                        article.title,  
+                        maxLines: 3,  
+                        overflow: TextOverflow.ellipsis,  
+                      ),  
+
+                      subtitle: Text(  
+                        article.date.toLocal().toString(),  
+                      ),  
+
+                      onTap: () {  
+                        // Le lien de l'article  
+                        // sera ouvert dans l'étape suivante.  
+                      },  
+                    ),  
+                  );  
+                },  
+              ),  
+      ),  
+    ],  
+  ),  
+);
+
+}
+
