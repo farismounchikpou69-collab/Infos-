@@ -139,7 +139,9 @@ class _NewsHomeState extends State<NewsHome> {
           Expanded(
             child: articles.isEmpty && !loading
                 ? const Center(
-                    child: Text('Aucune actualité disponible.'),
+                    child: Text(
+                      'Aucune actualité disponible.',
+                    ),
                   )
                 : ListView.builder(
                     itemCount: articles.length,
@@ -172,7 +174,9 @@ class _NewsHomeState extends State<NewsHome> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           subtitle: Text(
-                            article.date.toLocal().toString(),
+                            article.publishedAt
+                                .toLocal()
+                                .toString(),
                           ),
                           onTap: () {},
                         ),
