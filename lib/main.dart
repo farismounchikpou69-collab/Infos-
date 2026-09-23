@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'lib/models/news_article.dart';
-import 'lib/services/news_api_service.dart';
+import 'models/news_article.dart';
+import 'services/news_api_service.dart';
 
 void main() {
   runApp(const WorldAIApp());
