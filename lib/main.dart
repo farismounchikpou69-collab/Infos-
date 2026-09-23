@@ -56,11 +56,15 @@ class _NewsHomeState extends State<NewsHome> {
     try {
       final result = await api.getWorldNews();
 
+      if (!mounted) return;
+
       setState(() {
         articles = result;
         loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
+
       setState(() {
         loading = false;
         error = 'Impossible de charger les actualités.';
@@ -82,11 +86,15 @@ class _NewsHomeState extends State<NewsHome> {
     try {
       final result = await api.search(query);
 
+      if (!mounted) return;
+
       setState(() {
         articles = result;
         loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
+
       setState(() {
         loading = false;
         error = 'Recherche impossible.';
@@ -154,7 +162,8 @@ class _NewsHomeState extends State<NewsHome> {
                           vertical: 6,
                         ),
                         child: ListTile(
-                          leading: article.imageUrl != null
+                          leading: article.imageUrl != null &&
+                                  article.imageUrl!.isNotEmpty
                               ? Image.network(
                                   article.imageUrl!,
                                   width: 80,
@@ -167,18 +176,20 @@ class _NewsHomeState extends State<NewsHome> {
                                     );
                                   },
                                 )
-                              : const Icon(Icons.article),
+                              : const Icon(
+                                  Icons.article,
+                                  size: 50,
+                                ),
                           title: Text(
                             article.title,
-                            maxLines: 3,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                           subtitle: Text(
-                            article.publishedAt
-                                .toLocal()
-                                .toString(),
+                            '${article.source}\n${_formatDate(article.publishedAt)}',
+                            maxLines: 2,
                           ),
-                          onTap: () {},
+                          isThreeLine: true,
                         ),
                       );
                     },
@@ -187,5 +198,18 @@ class _NewsHomeState extends State<NewsHome> {
         ],
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    final localDate = date.toLocal();
+
+    final day = localDate.day.toString().padLeft(2, '0');
+    final month = localDate.month.toString().padLeft(2, '0');
+    final year = localDate.year.toString();
+
+    final hour = localDate.hour.toString().padLeft(2, '0');
+    final minute = localDate.minute.toString().padLeft(2, '0');
+
+    return '$day/$month/$year à $hour:$minute';
   }
 }
